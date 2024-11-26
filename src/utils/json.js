@@ -1,12 +1,12 @@
 function parseJson({ data, onSuccess, onError }) {
+  let parsed = null;
   try {
-    const parsed = JSON.parse(data);
-    onSuccess && onSuccess(parsed);
-    return parsed;
+    parsed = JSON.parse(data);
   } catch (error) {
-    onError && onError(error);
-    return null;
+    onError && onError(error, data);
   }
+  if (parsed && onSuccess) onSuccess(parsed);
+  return parsed;
 }
 
 module.exports = { parseJson };

@@ -1,6 +1,10 @@
 const { start } = require("../server");
+const { WSSMock, WSMock } = require("../utils/mocks");
+const { silenceLogs } = require("../utils/test-utils");
 
 describe("server ws", () => {
+  silenceLogs();
+  
   it("should register on connection callback", () => {
     const wss = new WSSMock();
     const onConnection = jest.fn();
@@ -82,32 +86,3 @@ describe("server ws", () => {
   });
 });
 
-class WSSMock {
-  eventCallbacks = {
-    connection: () => {},
-  };
-  connections = [];
-  on(event, cb) {
-    this.eventCallbacks[event] = cb;
-  }
-
-  simulateEvent(event, payload) {
-    switch (event) {
-      case "connection":
-        this.connections.push(payload);
-        this.eventCallbacks[event](payload);
-        break;
-    }
-  }
-}
-
-class WSMock {
-  eventCallbacks = {};
-  send = jest.fn();
-  on(event, cb) {
-    this.eventCallbacks[event] = cb;
-  }
-  simulateEvent(event, payload) {
-    this.eventCallbacks[event](payload);
-  }
-}

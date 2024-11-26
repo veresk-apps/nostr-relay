@@ -10,8 +10,10 @@ function start({ wss, onConnection, onError, onClose, onMessage }) {
       parseJson({
         data: buffer.toString("utf8"),
         onSuccess: (message) => onMessage({ ws, message }),
-        onError: () =>
-          sendNoticeInvalid({ ws, reason: "message is not valid JSON" }),
+        onError: (error, value) => {
+          sendNoticeInvalid({ ws, reason: "message is not valid JSON" });
+          console.log("invalid: message is not valid JSON", error.message, value)
+        },
       });
     });
   });

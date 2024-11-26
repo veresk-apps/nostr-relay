@@ -1,11 +1,14 @@
 const { createMessageHandler } = require("../messages");
+const { WSMock } = require("../utils/mocks");
 
 describe("messages", () => {
   it("should handle EVENT message type", () => {
-    const message = ["EVENT", {"content": "hello, world"}];
+    const message = ["EVENT", { content: "hello, world" }];
     const onEvent = jest.fn();
-    createMessageHandler({ onEvent })({ message });
+    const ws = new WSMock();
+    createMessageHandler({ onEvent })({ ws, message });
     expect(onEvent).toHaveBeenCalledWith({
+      ws,
       event: { content: "hello, world" },
     });
   });
@@ -13,8 +16,10 @@ describe("messages", () => {
   it("should handle REQ message type with 1 query", () => {
     const message = ["REQ", "sub1", "query1"];
     const onReq = jest.fn();
-    createMessageHandler({ onReq })({ message });
+    const ws = new WSMock();
+    createMessageHandler({ onReq })({ ws, message });
     expect(onReq).toHaveBeenCalledWith({
+      ws,
       subscription: "sub1",
       queries: ["query1"],
     });
@@ -30,12 +35,23 @@ describe("messages", () => {
     });
   });
 
+  it("should handle CLOSE message type", () => {
+    const message = ["CLOSE", "sub1"];
+    const onClose = jest.fn();
+    const ws = new WSMock();
+    createMessageHandler({ onClose })({ ws, message });
+    expect(onClose).toHaveBeenCalledWith({
+      ws,
+      subscription: "sub1",
+    });
+  });
+
   it("should send NOTICE if message type is invalid", () => {
     const message = ["INVALID"];
-    const ws = {
-      send: jest.fn(),
-    };
+    const ws = new WSMock();
     createMessageHandler({})({ ws, message });
-    expect(ws.send).toHaveBeenCalledWith(`["NOTICE","invalid: unknown message type"]`);
+    expect(ws.send).toHaveBeenCalledWith(
+      `["NOTICE","invalid: unknown message type"]`
+    );
   });
 });

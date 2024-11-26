@@ -6,13 +6,13 @@ const createMessageHandler =
     const [type, eventOrSub, ...queries] = message;
       switch (type) {
         case "EVENT":
-          onEvent({ event: eventOrSub });
+          onEvent({ ws, event: eventOrSub });
           break;
         case "REQ":
-          onReq({ subscription: eventOrSub, queries });
+          onReq({ ws, subscription: eventOrSub, queries });
           break;
         case "CLOSE":
-          onClose({ subscription: eventOrSub });
+          onClose({ ws, subscription: eventOrSub });
           break;
         default:
           sendNoticeInvalid({ ws, reason: "unknown message type" });
