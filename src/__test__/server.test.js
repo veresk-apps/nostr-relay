@@ -31,9 +31,42 @@ describe("server ws", () => {
 
     start({ wss, onConnection: jest.fn(), onMessage });
     wss.simulateEvent("connection", ws);
-    ws.simulateEvent("message", Buffer.from('hello', 'utf8'));
+    ws.simulateEvent("message", Buffer.from("{}", "utf8"));
 
-    expect(onMessage).toHaveBeenCalledWith({ ws, message: 'hello' });
+    expect(onMessage).toHaveBeenCalledWith({ ws, message: {} });
+  });
+
+  it("should parse message json before passing it to onMessage", () => {
+    const wss = new WSSMock();
+    const ws = new WSMock();
+    const onMessage = jest.fn();
+
+    start({ wss, onConnection: jest.fn(), onMessage });
+    wss.simulateEvent("connection", ws);
+    ws.simulateEvent(
+      "message",
+      Buffer.from(`["EVENT", {"content": "foo"}]`, "utf8")
+    );
+
+    expect(onMessage).toHaveBeenCalledWith({
+      ws,
+      message: ["EVENT", { content: "foo" }],
+    });
+  });
+
+  it("should send NOTICE if message parsing is failed", () => {
+    const wss = new WSSMock();
+    const ws = new WSMock();
+    const onMessage = jest.fn();
+
+    start({ wss, onConnection: jest.fn(), onMessage });
+    wss.simulateEvent("connection", ws);
+    ws.simulateEvent("message", Buffer.from("invalid", "utf8"));
+
+    expect(onMessage).not.toHaveBeenCalled();
+    expect(ws.send).toHaveBeenCalledWith(
+      `["NOTICE","invalid: message is not valid JSON"]`
+    );
   });
 
   it("should register on close callback", () => {
@@ -69,13 +102,12 @@ class WSSMock {
 }
 
 class WSMock {
-  eventCallbacks = {
-  };
+  eventCallbacks = {};
+  send = jest.fn();
   on(event, cb) {
     this.eventCallbacks[event] = cb;
   }
-
   simulateEvent(event, payload) {
-    this.eventCallbacks[event](payload)
+    this.eventCallbacks[event](payload);
   }
 }
