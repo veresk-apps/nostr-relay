@@ -6,16 +6,20 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "migrate": "node ./migrate.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "jest": "^29.7.0",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "postgres-shift": "^0.1.0"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
+    "postgres": "^3.4.5",
     "ws": "^8.18.0"
   }
 }
