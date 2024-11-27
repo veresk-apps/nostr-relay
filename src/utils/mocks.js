@@ -28,7 +28,23 @@ class WSMock {
   }
 }
 
+
+function createDBMock() {
+  const events = [];
+  return {
+    events: {
+      async insertOne(event) {
+        events.push(event);
+      },
+      async findOne(id) {
+        events.find((event) => event.id === id);
+      },
+    },
+  };
+}
+
 module.exports = {
   WSMock,
   WSSMock,
+  createDBMock,
 };

@@ -1,9 +1,9 @@
 function silenceLogs() {
-  beforeAll(() => {
+  beforeEach(() => {
     jest.spyOn(console, "log").mockImplementation(jest.fn());
   });
 
-  afterAll(() => {
+  afterEach(() => {
     jest.restoreAllMocks();
   });
 }

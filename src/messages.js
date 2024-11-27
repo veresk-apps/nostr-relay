@@ -6,7 +6,7 @@ const createMessageHandler =
     const [type, eventOrSub, ...queries] = message;
       switch (type) {
         case "EVENT":
-          onEvent({ ws, event: eventOrSub });
+          onEvent({ ws, event: eventOrSub }).catch(console.error);
           break;
         case "REQ":
           onReq({ ws, subscription: eventOrSub, queries });

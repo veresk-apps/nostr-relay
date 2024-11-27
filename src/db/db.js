@@ -1,14 +1,32 @@
-const postgres = require("postgres");
+const { sql } = require("./connector");
 
-const { NOSTR_DB_PASSWORD } = process.env;
+function getPath(fileName) {
+  return `${__dirname}/sql/${fileName}`;
+}
 
-const sql = postgres({
-  host: "localhost",
-  port: 5432,
-  database: "nostr",
-  user: "nostr",
-  pass: NOSTR_DB_PASSWORD,
-  idle_timeout: 1,
-});
+const db = {
+  events: {
+    async insertOne({
+      id,
+      pubkey,
+      created_at,
+      kind,
+      tags,
+      content,
+      sig,
+    }) {
+      return await sql.file(getPath("insert-event.sql"), [
+        id,
+        pubkey,
+        created_at,
+        kind,
+        tags,
+        content,
+        sig,
+      ]);
+    }  
+  }
+}
 
-module.exports = { sql };
+
+module.exports = { db };

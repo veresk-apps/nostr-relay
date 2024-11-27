@@ -6,8 +6,8 @@ function sendNotice({ ws, prefix, reason }) {
   sendJson({ ws, data: ["NOTICE", `${prefix}: ${reason}`] });
 }
 
-function sendOk({ ws, eventId, success, prefix, reason }) {
-  sendJson({ ws, data: ["OK", eventId, success, `${prefix}: ${reason}`] });
+function sendOk({ ws, eventId, success, message = "" }) {
+  sendJson({ ws, data: ["OK", eventId, success, message] });
 }
 
 function sendJson({ ws, data }) {
