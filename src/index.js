@@ -1,7 +1,7 @@
 const { WebSocketServer } = require("ws");
 const server = require("./server");
-const { createMessageHandler } = require("./messages");
-const { createEventHandler } = require("./events");
+const { createMessageHandler } = require("./handlers/messages");
+const { createEventHandler } = require("./handlers/events");
 const { db } = require('./db/db');
 
 server.start({

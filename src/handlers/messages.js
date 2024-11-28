@@ -1,4 +1,4 @@
-const { sendNoticeInvalid } = require("./utils/send");
+const { sendNoticeInvalid } = require("../utils/send");
 
 const createMessageHandler =
   ({ onEvent, onReq, onClose }) =>

@@ -37,7 +37,7 @@ function createDBMock() {
         events.push(event);
       },
       async findOne(id) {
-        events.find((event) => event.id === id);
+        return events.find((event) => event.id === id);
       },
     },
   };

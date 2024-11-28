@@ -1,4 +1,4 @@
-const { sendOk } = require("./utils/send");
+const { sendOk } = require("../utils/send");
 
 const createEventHandler =
   ({ db }) =>

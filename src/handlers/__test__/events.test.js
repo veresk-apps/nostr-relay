@@ -1,6 +1,6 @@
 const { createEventHandler } = require("../events");
-const { WSMock, createDBMock } = require("../utils/mocks");
-const { silenceLogs } = require("../utils/test-utils");
+const { WSMock, createDBMock } = require("../../utils/mocks");
+const { silenceLogs } = require("../../utils/test-utils");
 
 describe("events", () => {
   silenceLogs();

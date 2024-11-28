@@ -1,10 +1,10 @@
 const { createMessageHandler } = require("../messages");
-const { WSMock } = require("../utils/mocks");
+const { WSMock } = require("../../utils/mocks");
 
 describe("messages", () => {
   it("should handle EVENT message type", () => {
     const message = ["EVENT", { content: "hello, world" }];
-    const onEvent = jest.fn();
+    const onEvent = jest.fn(() => Promise.resolve());
     const ws = new WSMock();
     createMessageHandler({ onEvent })({ ws, message });
     expect(onEvent).toHaveBeenCalledWith({
