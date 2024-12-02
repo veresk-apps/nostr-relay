@@ -5,22 +5,40 @@ const createReqHandler =
   ({ db }) =>
   async ({ ws, subscription, queries }) => {
     if (!queries.length) {
-      sendClosed({ ws, subscription, message: "error: no filters specified" });
-      return;
+      return sendClosed({
+        ws,
+        subscription,
+        message: "error: no filters specified",
+      });
     }
 
-    const events = await findEventsForAllQueries({ db, queries });
-    for (const event of events) {
-      sendEvent({ ws, subscription, event });
-    }
-    sendEOSE({ ws, subscription });
+    await findEvents({ db, queries })
+      .then((events) => {
+        sendEvents({ ws, subscription, events });
+      })
+      .catch((error) => {
+        sendClosedDbError({ ws, subscription, error });
+      });
   };
 
-async function findEventsForAllQueries({ db, queries }) {
+async function findEvents({ db, queries }) {
   const eventGroups = await Promise.all(
     queries.map((query) => db.events.findMany(query))
   );
   return flatten(eventGroups);
+}
+
+async function sendEvents({ ws, subscription, events }) {
+  for (const event of events) {
+    sendEvent({ ws, subscription, event });
+  }
+  sendEOSE({ ws, subscription });
+}
+
+function sendClosedDbError({ ws, subscription, error }) {
+  const message = "error: could not connect to the database";
+  console.log(message, error);
+  return sendClosed({ ws, subscription, message });
 }
 
 module.exports = { createReqHandler };

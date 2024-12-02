@@ -9,7 +9,7 @@ const createMessageHandler =
           onEvent({ ws, event: eventOrSub }).catch(console.error);
           break;
         case "REQ":
-          onReq({ ws, subscription: eventOrSub, queries });
+          onReq({ ws, subscription: eventOrSub, queries }).catch(console.error);
           break;
         case "CLOSE":
           onClose({ ws, subscription: eventOrSub });

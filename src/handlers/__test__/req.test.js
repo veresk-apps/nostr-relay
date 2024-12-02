@@ -92,15 +92,31 @@ describe("req", () => {
       ],
     });
 
-    for (const event of events) {
-      await db.events.insertOne(event);
-    }
+    await insertEvents({ db, events });
 
     await createReqHandler({ db })({ ws, subscription, queries });
 
     expect(ws.send).toHaveBeenCalledTimes(3);
     expectEventsSent({ ws, subscription, events });
     expectEOSESent({ ws, subscription });
+  });
+
+  it("should send CLOSED event in case of db failure", async () => {
+    const { subscription, ws, db, queries, events } = given({
+      queries: [{ ids: ["1"] }],
+      events: [{ id: "1" }],
+    });
+    const error = new Error("db failed")
+    db.events.findMany = jest.fn(() => Promise.reject(error));
+
+    await createReqHandler({ db })({ ws, subscription, queries });
+
+    expect(ws.send).toHaveBeenCalledTimes(1);
+    expectClosedSent({
+      ws,
+      subscription,
+      message: "error: could not connect to the database",
+    });
   });
 });
 
