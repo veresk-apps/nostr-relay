@@ -6,16 +6,8 @@ function getPath(fileName) {
 
 const db = {
   events: {
-    async insertOne({
-      id,
-      pubkey,
-      created_at,
-      kind,
-      tags,
-      content,
-      sig,
-    }) {
-      return await sql.file(getPath("insert-event.sql"), [
+    async insertOne({ id, pubkey, created_at, kind, tags, content, sig }) {
+      return sql.file(getPath("insert-event.sql"), [
         id,
         pubkey,
         created_at,
@@ -24,9 +16,13 @@ const db = {
         content,
         sig,
       ]);
-    }  
-  }
-}
-
+    },
+    async findOne(eventId) {
+      return sql
+        .file(getPath("find-event.sql"), [eventId])
+        .then(([event]) => event);
+    },
+  },
+};
 
 module.exports = { db };
