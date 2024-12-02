@@ -22,6 +22,12 @@ const db = {
         .file(getPath("find-event.sql"), [eventId])
         .then(([event]) => event);
     },
+    async findMany(query) {
+      return sql.file(getPath("find-events.sql"), [
+        query.ids ?? null,
+        query.authors ?? null,
+      ]);
+    },
   },
 };
 

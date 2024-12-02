@@ -3,6 +3,7 @@ const server = require("./server");
 const { createMessageHandler } = require("./handlers/messages");
 const { createEventHandler } = require("./handlers/events");
 const { db } = require('./db/db');
+const { createReqHandler } = require("./handlers/req");
 
 server.start({
   wss: new WebSocketServer({ port: 8080 }),
@@ -11,5 +12,6 @@ server.start({
   onClose: () => console.log("connection closed"),
   onMessage: createMessageHandler({
     onEvent: createEventHandler({ db }),
+    onReq: createReqHandler({ db })
   }),
 });

@@ -1,3 +1,5 @@
+const { where, includes, __, always } = require("ramda");
+
 class WSSMock {
   eventCallbacks = {
     connection: () => {},
@@ -28,7 +30,6 @@ class WSMock {
   }
 }
 
-
 function createDBMock() {
   const events = [];
   return {
@@ -38,6 +39,14 @@ function createDBMock() {
       },
       async findOne(id) {
         return events.find((event) => event.id === id);
+      },
+      async findMany(query) {
+        return events.filter(
+          where({
+            id: query.ids ? includes(__, query.ids) : always(true),
+            pubkey: query.authors ? includes(__, query.authors) : always(true),
+          })
+        );
       },
     },
   };
