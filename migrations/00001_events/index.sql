@@ -1,7 +1,7 @@
 CREATE TABLE events (
     id CHAR(64) PRIMARY KEY CHECK (id ~ '^[a-f0-9]{64}$'),
     pubkey CHAR(66) NOT NULL CHECK (pubkey ~ '^[a-f0-9]{66}$'),
-    created_at TIMESTAMP NOT NULL,
+    created_at BIGINT NOT NULL,
     kind INTEGER NOT NULL CHECK (kind BETWEEN 0 AND 65535),
     tags JSONB NOT NULL CHECK (jsonb_typeof(tags) = 'array'),
     content TEXT NOT NULL,

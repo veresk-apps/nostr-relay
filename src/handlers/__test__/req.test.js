@@ -9,7 +9,7 @@ describe("req", () => {
     it("should send an event for ids filter", async () => {
       const { subscription, ws, db, queries, events } = given({
         queries: [{ ids: ["1"] }],
-        events: [{ id: "1" }, {id: "2"}],
+        events: [{ id: "1" }, { id: "2" }],
       });
 
       await insertEvents({ db, events });
@@ -91,6 +91,61 @@ describe("req", () => {
 
       expect(ws.send).toHaveBeenCalledTimes(2);
       expectEventsSent({ ws, subscription, events: [events[0]] });
+    });
+
+    it("should send matched events for since filter", async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ since: 1733220002 }],
+        events: [
+          { id: "1", created_at: 1733220001 },
+          { id: "2", created_at: 1733220002 },
+          { id: "3", created_at: 1733220003 },
+        ],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(3);
+      const expectedEvents = [
+        { id: "2", created_at: 1733220002 },
+        { id: "3", created_at: 1733220003 },
+      ]
+      expectEventsSent({ ws, subscription, events: expectedEvents });
+    });
+
+    it("should not send events in since does not match", async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ since: 1733220004 }],
+        events: [
+          { id: "1", created_at: 1733220001 },
+          { id: "2", created_at: 1733220002 },
+          { id: "3", created_at: 1733220003 },
+        ],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(1);
+      expectEventsSent({ ws, subscription, events: [] });
+    });
+
+    it("should send all events if since is 0", async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ since: 0 }],
+        events: [
+          { id: "1", created_at: 1733220001 },
+          { id: "2", created_at: 1733220002 },
+          { id: "3", created_at: 1733220003 },
+        ],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(4);
+      expectEventsSent({ ws, subscription, events });
     });
   });
 
@@ -203,7 +258,7 @@ describe("req", () => {
 
     it("should send CLOSED for unknown filter", async () => {
       const { subscription, ws, db, queries, events } = given({
-        queries: [{ unknown_x: ["x"], unknown_y:['y'] }, { unknown_x: ["z"]}],
+        queries: [{ unknown_x: ["x"], unknown_y: ["y"] }, { unknown_x: ["z"] }],
         events: [{ id: "1" }],
       });
       await insertEvents({ db, events });

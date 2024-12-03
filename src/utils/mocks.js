@@ -1,4 +1,4 @@
-const { where, includes, __, always } = require("ramda");
+const { where, includes, __, always, gte } = require("ramda");
 
 class WSSMock {
   eventCallbacks = {
@@ -45,7 +45,8 @@ function createDBMock() {
           where({
             id: query.ids ? includes(__, query.ids) : always(true),
             pubkey: query.authors ? includes(__, query.authors) : always(true),
-            kind: query.kinds ? includes(__, query.kinds) : always(true)
+            kind: query.kinds ? includes(__, query.kinds) : always(true),
+            created_at: query.since ? gte(__, query.since) : always(true),
           })
         );
       },

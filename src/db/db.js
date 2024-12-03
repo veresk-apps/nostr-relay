@@ -26,7 +26,8 @@ const db = {
       return sql.file(getPath("find-events.sql"), [
         query.ids ?? null,
         query.authors ?? null,
-        query.kinds ?? null
+        query.kinds ?? null,
+        query.since ?? null
       ]);
     },
   },
