@@ -21,4 +21,8 @@ WHERE (
   AND (
     $4::bigint IS NULL
     OR created_at >= $4
+  )
+  AND (
+    $5::bigint IS NULL
+    OR created_at <= $5
   );

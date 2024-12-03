@@ -1,4 +1,4 @@
-const { where, includes, __, always, gte } = require("ramda");
+const { where, includes, __, always, gte, lte } = require("ramda");
 
 class WSSMock {
   eventCallbacks = {
@@ -41,14 +41,22 @@ function createDBMock() {
         return events.find((event) => event.id === id);
       },
       async findMany(query) {
-        return events.filter(
-          where({
-            id: query.ids ? includes(__, query.ids) : always(true),
-            pubkey: query.authors ? includes(__, query.authors) : always(true),
-            kind: query.kinds ? includes(__, query.kinds) : always(true),
-            created_at: query.since ? gte(__, query.since) : always(true),
-          })
-        );
+        return events
+          .filter(
+            where({
+              id: query.ids ? includes(__, query.ids) : always(true),
+              pubkey: query.authors
+                ? includes(__, query.authors)
+                : always(true),
+              kind: query.kinds ? includes(__, query.kinds) : always(true),
+              created_at: query.since ? gte(__, query.since) : always(true),
+            })
+          )
+          .filter(
+            where({
+              created_at: query.until ? lte(__, query.until) : always(true),
+            })
+          );
       },
     },
   };
