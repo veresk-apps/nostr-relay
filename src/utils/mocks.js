@@ -45,6 +45,7 @@ function createDBMock() {
           where({
             id: query.ids ? includes(__, query.ids) : always(true),
             pubkey: query.authors ? includes(__, query.authors) : always(true),
+            kind: query.kinds ? includes(__, query.kinds) : always(true)
           })
         );
       },

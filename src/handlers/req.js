@@ -1,17 +1,35 @@
-const { flatten, sortWith, descend, prop, ascend } = require("ramda");
+const {
+  flatten,
+  sortWith,
+  descend,
+  prop,
+  ascend,
+  difference,
+  keys,
+} = require("ramda");
 const { sendEvent, sendEOSE, sendClosed } = require("../utils/send");
+
+const ALLOWED_FILTER_NAMES = [
+  "ids",
+  "authors",
+  "kinds",
+  "since",
+  "until",
+  "limit",
+];
 
 const createReqHandler =
   ({ db }) =>
   async ({ ws, subscription, queries }) => {
-    if (!queries.length) {
+    const queryValidationError = validateQueries(queries);
+    if (queryValidationError) {
       return sendClosed({
         ws,
         subscription,
-        message: "error: no filters specified",
+        message: queryValidationError,
       });
     }
-
+    
     await findEvents({ db, queries })
       .then(sortEvents)
       .then((events) => {
@@ -21,6 +39,21 @@ const createReqHandler =
         sendClosedDbError({ ws, subscription, error });
       });
   };
+
+function validateQueries(queries) {
+  if (!queries.length) {
+    return "error: no filters specified";
+  } else if (hasUnknownFilters(queries)) {
+    return "error: unknown filter";
+  } else {
+    return null;
+  }
+}
+
+function hasUnknownFilters(queries) {
+  const allFilters = queries.flatMap(keys);
+  return difference(allFilters, ALLOWED_FILTER_NAMES).length > 0;
+}
 
 async function findEvents({ db, queries }) {
   const eventGroups = await Promise.all(

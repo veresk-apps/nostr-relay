@@ -8,8 +8,8 @@ describe("req", () => {
   describe("filters", () => {
     it("should send an event for ids filter", async () => {
       const { subscription, ws, db, queries, events } = given({
-        queries: [{ ids: ["1", "2"] }],
-        events: [{ id: "1" }],
+        queries: [{ ids: ["1"] }],
+        events: [{ id: "1" }, {id: "2"}],
       });
 
       await insertEvents({ db, events });
@@ -17,7 +17,7 @@ describe("req", () => {
       await createReqHandler({ db })({ ws, subscription, queries });
 
       expect(ws.send).toHaveBeenCalledTimes(2);
-      expectEventsSent({ ws, subscription, events });
+      expectEventsSent({ ws, subscription, events: [events[0]] });
     });
 
     it("should send an event for authors filter", async () => {
@@ -75,6 +75,22 @@ describe("req", () => {
 
       expect(ws.send).toHaveBeenCalledTimes(3);
       expectEventsSent({ ws, subscription, events });
+    });
+
+    it("should send an event for kinds filter", async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ kinds: [1] }],
+        events: [
+          { id: "1", kind: 1 },
+          { id: "2", kind: 0 },
+        ],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(2);
+      expectEventsSent({ ws, subscription, events: [events[0]] });
     });
   });
 
@@ -182,6 +198,23 @@ describe("req", () => {
         ws,
         subscription,
         message: "error: could not connect to the database",
+      });
+    });
+
+    it("should send CLOSED for unknown filter", async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ unknown_x: ["x"], unknown_y:['y'] }, { unknown_x: ["z"]}],
+        events: [{ id: "1" }],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(1);
+      expectClosedSent({
+        ws,
+        subscription,
+        message: "error: unknown filter",
       });
     });
   });
