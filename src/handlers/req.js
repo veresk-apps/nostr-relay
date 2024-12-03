@@ -1,4 +1,4 @@
-const { flatten } = require("ramda");
+const { flatten, sortWith, descend, prop, ascend } = require("ramda");
 const { sendEvent, sendEOSE, sendClosed } = require("../utils/send");
 
 const createReqHandler =
@@ -13,6 +13,7 @@ const createReqHandler =
     }
 
     await findEvents({ db, queries })
+      .then(sortEvents)
       .then((events) => {
         sendEvents({ ws, subscription, events });
       })
@@ -26,6 +27,10 @@ async function findEvents({ db, queries }) {
     queries.map((query) => db.events.findMany(query))
   );
   return flatten(eventGroups);
+}
+
+function sortEvents(events) {
+  return sortWith([descend(prop("created_at")), ascend(prop("id"))], events);
 }
 
 async function sendEvents({ ws, subscription, events }) {

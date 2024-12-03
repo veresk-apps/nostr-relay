@@ -106,7 +106,7 @@ describe("req", () => {
       queries: [{ ids: ["1"] }],
       events: [{ id: "1" }],
     });
-    const error = new Error("db failed")
+    const error = new Error("db failed");
     db.events.findMany = jest.fn(() => Promise.reject(error));
 
     await createReqHandler({ db })({ ws, subscription, queries });
@@ -118,11 +118,71 @@ describe("req", () => {
       message: "error: could not connect to the database",
     });
   });
+
+  describe("sorting", () => {
+    it("should order events by timestamp", async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ ids: ["1", "2", "3"] }],
+        events: [
+          { id: "2", created_at: 1733220002 },
+          { id: "3", created_at: 1733220003 },
+          { id: "1", created_at: 1733220001 },
+        ],
+      });
+
+      await insertEvents({ db, events });
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      const eventsSorted = [
+        { id: "3", created_at: 1733220003 },
+        { id: "2", created_at: 1733220002 },
+        { id: "1", created_at: 1733220001 },
+      ];
+
+      expect(ws.send).toHaveBeenCalledTimes(4);
+      expectEventsSentInOrder({ ws, subscription, events: eventsSorted });
+      expectEOSESent({ ws, subscription });
+    });
+
+    it("should order events by id if timestamp is the same", async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ ids: ["1", "2", "3"] }],
+        events: [
+          { id: "2", created_at: 1733220000 },
+          { id: "3", created_at: 1733220000 },
+          { id: "1", created_at: 1733220000 },
+        ],
+      });
+
+      await insertEvents({ db, events });
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      const eventsSorted = [
+        { id: "1", created_at: 1733220000 },
+        { id: "2", created_at: 1733220000 },
+        { id: "3", created_at: 1733220000 },
+      ];
+
+      expect(ws.send).toHaveBeenCalledTimes(4);
+      expectEventsSentInOrder({ ws, subscription, events: eventsSorted });
+      expectEOSESent({ ws, subscription });
+    });
+  });
 });
 
 function expectEventsSent({ ws, subscription, events }) {
   for (const event of events) {
     expect(ws.send).toHaveBeenCalledWith(
+      JSON.stringify(["EVENT", subscription, event])
+    );
+  }
+}
+
+function expectEventsSentInOrder({ ws, subscription, events }) {
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i];
+    expect(ws.send).toHaveBeenNthCalledWith(
+      i + 1,
       JSON.stringify(["EVENT", subscription, event])
     );
   }
