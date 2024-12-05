@@ -28,7 +28,8 @@ const db = {
         query.authors ?? null,
         query.kinds ?? null,
         query.since ?? null,
-        query.until ?? null
+        query.until ?? null,
+        query.limit ?? null
       ]);
     },
   },

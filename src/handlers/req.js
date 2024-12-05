@@ -1,9 +1,5 @@
 const {
   flatten,
-  sortWith,
-  descend,
-  prop,
-  ascend,
   difference,
   keys,
 } = require("ramda");
@@ -29,9 +25,8 @@ const createReqHandler =
         message: queryValidationError,
       });
     }
-    
+
     await findEvents({ db, queries })
-      .then(sortEvents)
       .then((events) => {
         sendEvents({ ws, subscription, events });
       })
@@ -60,10 +55,6 @@ async function findEvents({ db, queries }) {
     queries.map((query) => db.events.findMany(query))
   );
   return flatten(eventGroups);
-}
-
-function sortEvents(events) {
-  return sortWith([descend(prop("created_at")), ascend(prop("id"))], events);
 }
 
 async function sendEvents({ ws, subscription, events }) {

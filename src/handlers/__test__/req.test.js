@@ -242,6 +242,55 @@ describe("req", () => {
     });
   });
 
+  describe("limit", () => {
+    it('should return no more than the limit', async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [{ since: 1733220000, limit: 3 }],
+        events: [
+          { id: "1", created_at: 1733220001 },
+          { id: "2", created_at: 1733220002 },
+          { id: "3", created_at: 1733220003 },
+          { id: "4", created_at: 1733220004 },
+          { id: "5", created_at: 1733220005 },
+        ],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(4);
+      const expectedEvents = [
+        { id: "3", created_at: 1733220003 },
+        { id: "4", created_at: 1733220004 },
+        { id: "5", created_at: 1733220005 },
+      ]
+      expectEventsSent({ ws, subscription, events: expectedEvents });
+    });
+
+    it('should return no more than the limit event with several queries', async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [ { since: 1733220005, limit: 1 }, { until: 1733220001, limit: 1 },],
+        events: [
+          { id: "1", created_at: 1733220001 },
+          { id: "2", created_at: 1733220002 },
+          { id: "3", created_at: 1733220003 },
+          { id: "4", created_at: 1733220004 },
+          { id: "5", created_at: 1733220005 },
+        ],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(3);
+      const expectedEvents = [
+        { id: "5", created_at: 1733220005 },
+        { id: "1", created_at: 1733220001 },
+      ]
+      expectEventsSentInOrder({ ws, subscription, events: expectedEvents });
+    });
+  });
+
   describe("EOSE", () => {
     it("should send EOSE if no events", async () => {
       const { subscription, ws, db, queries } = given({

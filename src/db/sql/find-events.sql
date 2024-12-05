@@ -25,4 +25,7 @@ WHERE (
   AND (
     $5::bigint IS NULL
     OR created_at <= $5
-  );
+  )
+ORDER BY created_at DESC,
+  id ASC
+LIMIT $6;
