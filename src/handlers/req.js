@@ -1,9 +1,6 @@
-const {
-  flatten,
-  difference,
-  keys,
-} = require("ramda");
+const { flatten, difference, keys, when, sort } = require("ramda");
 const { sendEvent, sendEOSE, sendClosed } = require("../utils/send");
+const { sortEvents } = require("../utils/sort");
 
 const ALLOWED_FILTER_NAMES = [
   "ids",
@@ -27,6 +24,7 @@ const createReqHandler =
     }
 
     await findEvents({ db, queries })
+      .then((events) => sortForMultipleQueries({ queries, events }))
       .then((events) => {
         sendEvents({ ws, subscription, events });
       })
@@ -34,6 +32,14 @@ const createReqHandler =
         sendClosedDbError({ ws, subscription, error });
       });
   };
+
+function sortForMultipleQueries({ queries, events }) {
+  if (queries.length > 1) {
+    return sortEvents(events);
+  } else {
+    return events;
+  }
+}
 
 function validateQueries(queries) {
   if (!queries.length) {

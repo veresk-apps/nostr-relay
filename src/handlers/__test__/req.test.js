@@ -269,7 +269,7 @@ describe("req", () => {
 
     it('should return no more than the limit event with several queries', async () => {
       const { subscription, ws, db, queries, events } = given({
-        queries: [ { since: 1733220005, limit: 1 }, { until: 1733220001, limit: 1 },],
+        queries: [ { until: 1733220001, limit: 1 }, { since: 1733220005, limit: 1 }],
         events: [
           { id: "1", created_at: 1733220001 },
           { id: "2", created_at: 1733220002 },
