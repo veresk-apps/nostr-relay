@@ -15,7 +15,7 @@ describe("messages", () => {
 
   it("should handle REQ message type with 1 query", () => {
     const message = ["REQ", "sub1", "query1"];
-    const onReq = jest.fn();
+    const onReq = jest.fn(() => Promise.resolve());
     const ws = new WSMock();
     createMessageHandler({ onReq })({ ws, message });
     expect(onReq).toHaveBeenCalledWith({
@@ -27,7 +27,7 @@ describe("messages", () => {
 
   it("should handle REQ message type with 3 queries", () => {
     const message = ["REQ", "sub1", "query1", "query2", "query3"];
-    const onReq = jest.fn();
+    const onReq = jest.fn(() => Promise.resolve());
     createMessageHandler({ onReq })({ message });
     expect(onReq).toHaveBeenCalledWith({
       subscription: "sub1",
