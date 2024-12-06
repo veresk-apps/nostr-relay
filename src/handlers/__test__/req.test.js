@@ -267,7 +267,7 @@ describe("req", () => {
       expectEventsSent({ ws, subscription, events: expectedEvents });
     });
 
-    it('should return no more than the limit event with several queries', async () => {
+    it('should return no more than the limit even with several queries', async () => {
       const { subscription, ws, db, queries, events } = given({
         queries: [ { until: 1733220001, limit: 1 }, { since: 1733220005, limit: 1 }],
         events: [
@@ -285,6 +285,24 @@ describe("req", () => {
       expect(ws.send).toHaveBeenCalledTimes(3);
       const expectedEvents = [
         { id: "5", created_at: 1733220005 },
+        { id: "1", created_at: 1733220001 },
+      ]
+      expectEventsSentInOrder({ ws, subscription, events: expectedEvents });
+    });
+
+    it('should return no duplicates for several queries', async () => {
+      const { subscription, ws, db, queries, events } = given({
+        queries: [ { since: 1733220001, limit: 1 }, { since: 1733220001, limit: 1 }],
+        events: [
+          { id: "1", created_at: 1733220001 },
+        ],
+      });
+      await insertEvents({ db, events });
+
+      await createReqHandler({ db })({ ws, subscription, queries });
+
+      expect(ws.send).toHaveBeenCalledTimes(2);
+      const expectedEvents = [
         { id: "1", created_at: 1733220001 },
       ]
       expectEventsSentInOrder({ ws, subscription, events: expectedEvents });

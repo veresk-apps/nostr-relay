@@ -1,4 +1,10 @@
-const { flatten, difference, keys, when, sort } = require("ramda");
+const {
+  flatten,
+  difference,
+  keys,
+  uniqBy,
+  prop,
+} = require("ramda");
 const { sendEvent, sendEOSE, sendClosed } = require("../utils/send");
 const { sortEvents } = require("../utils/sort");
 
@@ -24,7 +30,8 @@ const createReqHandler =
     }
 
     await findEvents({ db, queries })
-      .then((events) => sortForMultipleQueries({ queries, events }))
+      .then((events) => sortEventsForMultipleQueries({ queries, events }))
+      .then(uniqBy(prop("id")))
       .then((events) => {
         sendEvents({ ws, subscription, events });
       })
@@ -33,7 +40,7 @@ const createReqHandler =
       });
   };
 
-function sortForMultipleQueries({ queries, events }) {
+function sortEventsForMultipleQueries({ queries, events }) {
   if (queries.length > 1) {
     return sortEvents(events);
   } else {
