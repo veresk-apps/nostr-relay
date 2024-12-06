@@ -4,6 +4,8 @@ const {
   keys,
   uniqBy,
   prop,
+  pipe,
+  when,
 } = require("ramda");
 const { sendEvent, sendEOSE, sendClosed } = require("../utils/send");
 const { sortEvents } = require("../utils/sort");
@@ -30,8 +32,9 @@ const createReqHandler =
     }
 
     await findEvents({ db, queries })
-      .then((events) => sortEventsForMultipleQueries({ queries, events }))
-      .then(uniqBy(prop("id")))
+      .then(
+        when(() => queries.length > 1, pipe(sortEvents, uniqBy(prop("id"))))
+      )
       .then((events) => {
         sendEvents({ ws, subscription, events });
       })
