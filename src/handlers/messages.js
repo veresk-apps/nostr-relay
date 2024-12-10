@@ -1,30 +1,28 @@
-
 const { sendNoticeInvalid, sendEvent } = require("../utils/send");
+const { SubscriptionManager } = require("../utils/subscription");
 
-const createMessageHandler = ({ onEvent, onReq, onClose }) => {
-  const subscriptions = [];
+const createMessageHandler = ({ onEvent, onReq }) => {
+  const subscriptionManager = new SubscriptionManager();
   return async ({ ws, message }) => {
     const [type, eventOrSub, ...queries] = message;
     switch (type) {
       case "EVENT": {
         const event = eventOrSub;
         await onEvent({ ws, event }).catch(console.error);
-        for (const { id, queries } of subscriptions) {
-          if (matchAny({ queries, event })) {
-            sendEvent({ ws, subscription: id, event });
-          }
+        for (const subscription of subscriptionManager.match(event)) {
+          sendEvent({ ws, subscription: subscription.id, event });
         }
         break;
       }
       case "REQ": {
         const subscription = eventOrSub;
-        subscriptions.push({ id: subscription, queries });
+        subscriptionManager.add({ id: subscription, queries });
         await onReq({ ws, subscription, queries }).catch(console.error);
         break;
       }
       case "CLOSE": {
         const subscription = eventOrSub;
-        await onClose({ ws, subscription });
+        subscriptionManager.delete(subscription);
         break;
       }
       default:
@@ -32,26 +30,5 @@ const createMessageHandler = ({ onEvent, onReq, onClose }) => {
     }
   };
 };
-
-function matchAny({ queries, event }) {
-  return queries.some((query) => match({ query, event }));
-}
-
-function match({ query, event }) {
-  const {
-    ids = [event.id],
-    kinds = [event.kind],
-    authors = [event.pubkey],
-    since = event.created_at,
-    until = event.created_at,
-  } = query;
-  return (
-    ids.includes(event.id) &&
-    kinds.includes(event.kind) &&
-    authors.includes(event.pubkey) &&
-    since <= event.created_at &&
-    until >= event.created_at
-  );
-}
 
 module.exports = { createMessageHandler };

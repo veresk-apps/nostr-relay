@@ -44,17 +44,6 @@ describe("messages", () => {
     });
   });
 
-  it("should handle CLOSE message type", () => {
-    const message = ["CLOSE", "sub1"];
-    const onClose = jest.fn();
-    const ws = new WSMock();
-    createMessageHandler({ onClose })({ ws, message });
-    expect(onClose).toHaveBeenCalledWith({
-      ws,
-      subscription: "sub1",
-    });
-  });
-
   it("should send NOTICE if message type is invalid", () => {
     const message = ["INVALID"];
     const ws = new WSMock();
@@ -79,7 +68,7 @@ describe("messages", () => {
 
       const onMessage = createMessageHandler({
         onReq: createReqHandler({ db }),
-        onEvent: createEventHandler({ db })
+        onEvent: createEventHandler({ db }),
       });
 
       await onMessage({ ws, message: reqMsg });
@@ -101,10 +90,39 @@ describe("messages", () => {
         { kinds: [0] },
         { authors: "pub0" },
         { since: 110 },
-        { until: 90 }
+        { until: 90 },
       ];
       const event = { id: "1", kind: 1, author: "pub1", created_at: 100 };
       const eventMsg = ["EVENT", event];
+      const db = createDBMock();
+      const ws = new WSMock();
+
+      const onMessage = createMessageHandler({
+        onReq: createReqHandler({ db }),
+        onEvent: createEventHandler({ db }),
+      });
+
+      await onMessage({ ws, message: reqMsg });
+      expectEOSESent({ ws, subscription });
+
+      await onMessage({ ws, message: eventMsg });
+      expectOKSent({ ws, subscription, eventId: "1" });
+
+      expect(ws.send).not.toHaveBeenCalledWith(
+        JSON.stringify(["EVENT", subscription, event])
+      );
+    });
+
+    it("should stop sendoing events after the subscription is CLOSED", async () => {
+      const subscription = "sub1";
+      const reqMsg = ["REQ", subscription, { kinds: [1] }];
+      const events = [
+        { id: "1", kind: 1, created_at: 1 },
+        { id: "2", kind: 1, created_at: 2 },
+      ];
+      const eventMsg1 = ["EVENT", events[0]];
+      const eventMsg2 = ["EVENT", events[1]];
+      const closeMsg = ["CLOSE", subscription];
       const db = createDBMock();
       const ws = new WSMock();
 
@@ -116,9 +134,18 @@ describe("messages", () => {
       await onMessage({ ws, message: reqMsg });
       expectEOSESent({ ws, subscription });
 
-      await onMessage({ ws, message: eventMsg });
+      await onMessage({ ws, message: eventMsg1 });
       expectOKSent({ ws, subscription, eventId: "1" });
-      expect(ws.send).toHaveBeenCalledTimes(2);
+      expectEventsSent({ ws, subscription, events: [events[0]] });
+
+      await onMessage({ ws, message: closeMsg });
+      await onMessage({ ws, message: eventMsg2 });
+      expectOKSent({ ws, subscription, eventId: "2" });
+
+      expect(ws.send).not.toHaveBeenCalledWith(
+        JSON.stringify(["EVENT", subscription, events[1]])
+      );
+      expect(ws.send).toHaveBeenCalledTimes(4);
     });
   });
 });
