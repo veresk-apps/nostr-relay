@@ -14,7 +14,7 @@ const ALLOWED_FILTER_NAMES = [
 
 const createReqHandler =
   ({ db }) =>
-  async ({ ws, subscription, queries }) => {
+  async ({ ws, subscription, queries, subscriptionManager }) => {
     const queryValidationError = validateQueries(queries);
     if (queryValidationError) {
       return sendClosed({
@@ -35,6 +35,8 @@ const createReqHandler =
       .catch((error) => {
         sendClosedDbError({ ws, subscription, error });
       });
+
+    subscriptionManager.add({ id: subscription, queries });
   };
 
 function validateQueries(queries) {

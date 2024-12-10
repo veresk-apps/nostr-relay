@@ -8,16 +8,12 @@ const createMessageHandler = ({ onEvent, onReq }) => {
     switch (type) {
       case "EVENT": {
         const event = eventOrSub;
-        await onEvent({ ws, event }).catch(console.error);
-        for (const subscription of subscriptionManager.match(event)) {
-          sendEvent({ ws, subscription: subscription.id, event });
-        }
+        await onEvent({ ws, event, subscriptionManager }).catch(console.error);
         break;
       }
       case "REQ": {
         const subscription = eventOrSub;
-        subscriptionManager.add({ id: subscription, queries });
-        await onReq({ ws, subscription, queries }).catch(console.error);
+        await onReq({ ws, subscription, queries, subscriptionManager }).catch(console.error);
         break;
       }
       case "CLOSE": {
