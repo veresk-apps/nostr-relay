@@ -1,5 +1,12 @@
 const { WSMock, createDBMock } = require("../../utils/mocks");
-const { silenceLogs } = require("../../utils/test-utils");
+const {
+  silenceLogs,
+  expectEOSESent,
+  insertEvents,
+  expectEventsSent,
+  expectClosedSent,
+  expectEventsSentInOrder,
+} = require("../../utils/test-utils");
 const { createReqHandler } = require("../req");
 
 describe("req", () => {
@@ -353,9 +360,8 @@ describe("req", () => {
     });
 
     it("should send CLOSED event in case of db failure", async () => {
-      const { subscription, ws, db, queries, events } = given({
-        queries: [{ ids: ["1"] }],
-        events: [{ id: "1" }],
+      const { subscription, ws, db, queries } = given({
+        queries: [{ ids: ["1"] }]
       });
       const error = new Error("db failed");
       db.events.findMany = jest.fn(() => Promise.reject(error));
@@ -388,40 +394,6 @@ describe("req", () => {
     });
   });
 });
-
-function expectEventsSent({ ws, subscription, events }) {
-  for (const event of events) {
-    expect(ws.send).toHaveBeenCalledWith(
-      JSON.stringify(["EVENT", subscription, event])
-    );
-  }
-}
-
-function expectEventsSentInOrder({ ws, subscription, events }) {
-  for (let i = 0; i < events.length; i++) {
-    const event = events[i];
-    expect(ws.send).toHaveBeenNthCalledWith(
-      i + 1,
-      JSON.stringify(["EVENT", subscription, event])
-    );
-  }
-}
-
-function expectEOSESent({ ws, subscription }) {
-  expect(ws.send).toHaveBeenCalledWith(JSON.stringify(["EOSE", subscription]));
-}
-
-function expectClosedSent({ ws, subscription, message }) {
-  expect(ws.send).toHaveBeenCalledWith(
-    JSON.stringify(["CLOSED", subscription, message])
-  );
-}
-
-async function insertEvents({ db, events }) {
-  for (const event of events) {
-    await db.events.insertOne(event);
-  }
-}
 
 function given({
   subscription = "sub1",

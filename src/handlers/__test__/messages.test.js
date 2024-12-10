@@ -1,5 +1,14 @@
 const { createMessageHandler } = require("../messages");
-const { WSMock } = require("../../utils/mocks");
+const { WSMock, createDBMock } = require("../../utils/mocks");
+const { createEventHandler } = require("../events");
+const { createReqHandler } = require("../req");
+const {
+  expectEOSESent,
+  expectEventsSent,
+  expectEventsSentInOrder,
+  expectOKSent,
+  insertEvents,
+} = require("../../utils/test-utils");
 
 describe("messages", () => {
   it("should handle EVENT message type", () => {
@@ -53,5 +62,63 @@ describe("messages", () => {
     expect(ws.send).toHaveBeenCalledWith(
       `["NOTICE","invalid: unknown message type"]`
     );
+  });
+
+  describe("subscription", () => {
+    it("should send new event for active subscription if event matches filters", async () => {
+      const subscription = "sub1";
+      const reqMsg = ["REQ", subscription, { kinds: [1], authors: ["pub1"] }];
+      const baseEvent = { kind: 1, pubkey: "pub1", created_at: 100 };
+      const oldEvent = { ...baseEvent, id: "0" };
+      const newEvent = { ...baseEvent, id: "1" };
+      const eventMsg = ["EVENT", newEvent];
+      const db = createDBMock();
+      const ws = new WSMock();
+
+      await insertEvents({ db, events: [oldEvent] });
+
+      const onMessage = createMessageHandler({
+        onReq: createReqHandler({ db }),
+        onEvent: createEventHandler({ db })
+      });
+
+      await onMessage({ ws, message: reqMsg });
+      expectEventsSent({ ws, subscription, events: [oldEvent] });
+      expectEOSESent({ ws, subscription });
+
+      await onMessage({ ws, message: eventMsg });
+      expectOKSent({ ws, subscription, eventId: "1" });
+      expectEventsSent({ ws, subscription, events: [newEvent] });
+      expect(ws.send).toHaveBeenCalledTimes(4);
+    });
+
+    it("should not send new event for active subscription if event does not match filters", async () => {
+      const subscription = "sub1";
+      const reqMsg = [
+        "REQ",
+        subscription,
+        { ids: ["0"] },
+        { kinds: [0] },
+        { authors: "pub0" },
+        { since: 110 },
+        { until: 90 }
+      ];
+      const event = { id: "1", kind: 1, author: "pub1", created_at: 100 };
+      const eventMsg = ["EVENT", event];
+      const db = createDBMock();
+      const ws = new WSMock();
+
+      const onMessage = createMessageHandler({
+        onReq: createReqHandler({ db }),
+        onEvent: createEventHandler({ db })
+      });
+
+      await onMessage({ ws, message: reqMsg });
+      expectEOSESent({ ws, subscription });
+
+      await onMessage({ ws, message: eventMsg });
+      expectOKSent({ ws, subscription, eventId: "1" });
+      expect(ws.send).toHaveBeenCalledTimes(2);
+    });
   });
 });

@@ -18,12 +18,18 @@ function sendEOSE({ ws, subscription }) {
   sendJson({ ws, data: ["EOSE", subscription] });
 }
 
-function sendClosed({ ws, subscription, message }) {
-  sendJson({ ws, data: ["CLOSED", subscription, message] });
+function sendClosed({ ws, subscription, message}) {
+  sendJson({ ws, data: ["CLOSED", subscription,message] });
 }
 
 function sendJson({ ws, data }) {
   ws.send(JSON.stringify(data));
+}
+
+function sendEvents({ ws, subscription, events }) {
+  for (const event of events) {
+    sendEvent({ ws, subscription, event });
+  }
 }
 
 module.exports = {
@@ -34,4 +40,5 @@ module.exports = {
   sendEvent,
   sendEOSE,
   sendClosed,
+  sendEvents
 };

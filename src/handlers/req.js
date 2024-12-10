@@ -1,14 +1,7 @@
-const {
-  flatten,
-  difference,
-  keys,
-  uniqBy,
-  prop,
-  pipe,
-  when,
-} = require("ramda");
-const { sendEvent, sendEOSE, sendClosed } = require("../utils/send");
+const { difference, keys, uniqBy, prop, pipe, when } = require("ramda");
+const { sendEOSE, sendClosed, sendEvents } = require("../utils/send");
 const { sortEvents } = require("../utils/sort");
+const { findEvents } = require("../utils/db");
 
 const ALLOWED_FILTER_NAMES = [
   "ids",
@@ -37,19 +30,12 @@ const createReqHandler =
       )
       .then((events) => {
         sendEvents({ ws, subscription, events });
+        sendEOSE({ ws, subscription });
       })
       .catch((error) => {
         sendClosedDbError({ ws, subscription, error });
       });
   };
-
-function sortEventsForMultipleQueries({ queries, events }) {
-  if (queries.length > 1) {
-    return sortEvents(events);
-  } else {
-    return events;
-  }
-}
 
 function validateQueries(queries) {
   if (!queries.length) {
@@ -64,20 +50,6 @@ function validateQueries(queries) {
 function hasUnknownFilters(queries) {
   const allFilters = queries.flatMap(keys);
   return difference(allFilters, ALLOWED_FILTER_NAMES).length > 0;
-}
-
-async function findEvents({ db, queries }) {
-  const eventGroups = await Promise.all(
-    queries.map((query) => db.events.findMany(query))
-  );
-  return flatten(eventGroups);
-}
-
-async function sendEvents({ ws, subscription, events }) {
-  for (const event of events) {
-    sendEvent({ ws, subscription, event });
-  }
-  sendEOSE({ ws, subscription });
 }
 
 function sendClosedDbError({ ws, subscription, error }) {
