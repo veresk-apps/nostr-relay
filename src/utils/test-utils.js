@@ -1,3 +1,8 @@
+const { createEventHandler } = require("../handlers/events");
+const { createMessageHandler } = require("../handlers/messages");
+const { createReqHandler } = require("../handlers/req");
+const { WSMock, createDBMock } = require("./mocks");
+
 function silenceLogs() {
   beforeEach(() => {
     jest.spyOn(console, "log").mockImplementation(jest.fn());
@@ -48,6 +53,34 @@ async function insertEvents({ db, events }) {
   }
 }
 
+async function givenMessageHandler({
+  subscription = "sub1",
+  queries = [],
+  events = [],
+  ws = new WSMock(),
+  db = createDBMock(),
+} = {}) {
+  await insertEvents({ db, events });
+  const actOnMessage = createMessageHandler({
+    onReq: createReqHandler({ db }),
+    onEvent: createEventHandler({ db }),
+  });
+  const actOnReq = () =>
+    actOnMessage({ ws, message: ["REQ", subscription, ...queries] });
+  const actOnEvent = ({ event }) =>
+    actOnMessage({ ws, message: ["EVENT", event] });
+  return {
+    subscription,
+    ws,
+    db,
+    queries,
+    events,
+    actOnMessage,
+    actOnReq,
+    actOnEvent,
+  };
+}
+
 module.exports = {
   silenceLogs,
   expectEOSESent,
@@ -55,5 +88,6 @@ module.exports = {
   expectEventsSentInOrder,
   expectClosedSent,
   insertEvents,
-  expectOKSent
+  expectOKSent,
+  givenMessageHandler
 };
