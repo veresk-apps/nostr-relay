@@ -8,7 +8,7 @@ const createEventHandler =
     } catch (error) {
       sendConnectionError({ error, ws, event });
     }
-    sendEventToMatchedSubscriptions({ subscriptionManager, event, ws });
+    sendEventToMatchedSubscriptions({ subscriptionManager, event });
   };
 
 async function insertEvent({ ws, db, event }) {
@@ -43,9 +43,9 @@ function sendConnectionError({ error, ws, event }) {
   });
 }
 
-function sendEventToMatchedSubscriptions({ subscriptionManager, event, ws }) {
+function sendEventToMatchedSubscriptions({ subscriptionManager, event }) {
   for (const subscription of subscriptionManager.match(event)) {
-    sendEvent({ ws, subscription: subscription.id, event });
+    sendEvent({ ws: subscription.ws, subscription: subscription.id, event });
   }
 }
 

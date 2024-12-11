@@ -10,7 +10,6 @@ const {
 } = require("../../utils/test-utils");
 
 describe("messages", () => {
-
   it("should send NOTICE if message type is invalid", () => {
     const message = ["INVALID"];
     const ws = new WSMock();
@@ -48,6 +47,31 @@ describe("messages", () => {
       expect(ws.send).toHaveBeenCalledTimes(4);
     });
 
+    it("should send event only to the socket that created subscription", async () => {
+      const subscription = "sub1";
+      const reqMsg = ["REQ", subscription, { kinds: [1] }];
+      const event = { id: "1", kind: 1, created_at: 100 };
+      const eventMsg = ["EVENT", event];
+      const db = createDBMock();
+      const wsForSub = new WSMock();
+      const wsForEvent = new WSMock();
+
+      const onMessage = createMessageHandler({
+        onReq: createReqHandler({ db }),
+        onEvent: createEventHandler({ db }),
+      });
+
+      await onMessage({ ws: wsForSub, message: reqMsg });
+      await onMessage({ ws: wsForEvent, message: eventMsg });
+
+      expect(wsForEvent.send).not.toHaveBeenCalledWith(
+        JSON.stringify(["EVENT", subscription, event])
+      );
+      expect(wsForSub.send).toHaveBeenCalledWith(
+        JSON.stringify(["EVENT", subscription, event])
+      );
+    });
+
     it("should not send new event for active subscription if event does not match filters", async () => {
       const subscription = "sub1";
       const reqMsg = [
@@ -74,7 +98,7 @@ describe("messages", () => {
 
       await onMessage({ ws, message: eventMsg });
       expectOKSent({ ws, subscription, eventId: "1" });
-
+      
       expect(ws.send).not.toHaveBeenCalledWith(
         JSON.stringify(["EVENT", subscription, event])
       );
@@ -95,7 +119,7 @@ describe("messages", () => {
 
       const onMessage = createMessageHandler({
         onReq: createReqHandler({ db }),
-        onEvent: createEventHandler({ db })
+        onEvent: createEventHandler({ db }),
       });
 
       await onMessage({ ws, message: reqMsg });

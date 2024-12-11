@@ -36,7 +36,7 @@ const createReqHandler =
         sendClosedDbError({ ws, subscription, error });
       });
 
-    subscriptionManager.add({ id: subscription, queries });
+    subscriptionManager.add({ id: subscription, queries, ws });
   };
 
 function validateQueries(queries) {
