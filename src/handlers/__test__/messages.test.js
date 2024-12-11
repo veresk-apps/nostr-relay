@@ -98,13 +98,42 @@ describe("messages", () => {
 
       await onMessage({ ws, message: eventMsg });
       expectOKSent({ ws, subscription, eventId: "1" });
-      
+
       expect(ws.send).not.toHaveBeenCalledWith(
         JSON.stringify(["EVENT", subscription, event])
       );
     });
 
-    it("should stop sendoing events after the subscription is CLOSED", async () => {
+    it("should not recieve new events if subscription was recreated, but the new subscription should", async () => {
+      const subscription = "sub1"
+      const reqMsgSub1 = ["REQ", subscription, { ids: ["1"] }];
+      const reqMsgSub2 = ["REQ", subscription, { ids: ["2"] }];
+      const event1 = { id: "1", kind: 1, created_at: 100 };
+      const event2 = { id: "2", kind: 1, created_at: 101 };
+      const eventMsg1 = ["EVENT", event1];
+      const eventMsg2 = ["EVENT", event2];
+      const db = createDBMock();
+      const ws = new WSMock();
+
+      const onMessage = createMessageHandler({
+        onReq: createReqHandler({ db }),
+        onEvent: createEventHandler({ db }),
+      });
+
+      await onMessage({ ws, message: reqMsgSub1 });
+      await onMessage({ ws, message: reqMsgSub2 });
+      await onMessage({ ws, message: eventMsg1 });
+      await onMessage({ ws, message: eventMsg2 });
+
+      expect(ws.send).not.toHaveBeenCalledWith(
+        JSON.stringify(["EVENT", subscription, event1])
+      );
+      expect(ws.send).toHaveBeenCalledWith(
+        JSON.stringify(["EVENT", subscription, event2])
+      );
+    });
+
+    it("should stop sending events after the subscription is CLOSED", async () => {
       const subscription = "sub1";
       const reqMsg = ["REQ", subscription, { kinds: [1] }];
       const events = [

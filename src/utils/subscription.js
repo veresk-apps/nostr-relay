@@ -1,6 +1,7 @@
 class SubscriptionManager {
   subscriptions = [];
   add(subscription) {
+    this.delete(subscription.id);
     this.subscriptions.push(subscription);
   }
   delete(subscriptionId) {
