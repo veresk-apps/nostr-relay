@@ -58,7 +58,7 @@ describe("server ws", () => {
     });
   });
 
-  it("should send NOTICE if message parsing is failed", () => {
+  it("should send NOTICE if message parsing fails", () => {
     const wss = new WSSMock();
     const ws = new WSMock();
     const onMessage = jest.fn();
@@ -85,4 +85,3 @@ describe("server ws", () => {
     expect(onClose).toHaveBeenCalledWith({ ws });
   });
 });
-

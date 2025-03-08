@@ -104,7 +104,7 @@ describe("messages", () => {
       );
     });
 
-    it("should not recieve new events if subscription was recreated, but the new subscription should", async () => {
+    it("should not receive new events if subscription was recreated, but the new subscription should", async () => {
       const subscription = "sub1"
       const reqMsgSub1 = ["REQ", subscription, { ids: ["1"] }];
       const reqMsgSub2 = ["REQ", subscription, { ids: ["2"] }];
@@ -133,7 +133,7 @@ describe("messages", () => {
       );
     });
 
-    it("should stop sending events after the subscription is CLOSED", async () => {
+    it("should stop sending events after the subscription is closed", async () => {
       const subscription = "sub1";
       const reqMsg = ["REQ", subscription, { kinds: [1] }];
       const events = [

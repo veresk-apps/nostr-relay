@@ -35,7 +35,7 @@ describe("req", () => {
       expectEventsSent({ ws, subscription, events });
     });
 
-    it("should not send an event if authors filter do not match", async () => {
+    it("should not send an event if authors filter does not match", async () => {
       const { ws, actOnReq } = await givenMessageHandler({
         queries: [{ authors: ["pubx"] }],
         events: [{ id: "1", pubkey: "pub1" }],
@@ -58,7 +58,7 @@ describe("req", () => {
       expectEventsSent({ ws, subscription, events });
     });
 
-    it("should handle many filters", async () => {
+    it("should handle multiple filters", async () => {
       const { subscription, ws, actOnReq, events } = await givenMessageHandler({
         queries: [{ ids: ["1"] }, { authors: ["pub2"] }],
         events: [
@@ -107,7 +107,7 @@ describe("req", () => {
       expectEventsSent({ ws, subscription, events: expectedEvents });
     });
 
-    it("should not send events in since does not match", async () => {
+    it("should not send events if since does not match", async () => {
       const { subscription, ws, actOnReq } = await givenMessageHandler({
         queries: [{ since: 1733220004 }],
         events: [
@@ -253,7 +253,7 @@ describe("req", () => {
       expectEventsSent({ ws, subscription, events: expectedEvents });
     });
 
-    it("should return no more than the limit even with several queries", async () => {
+    it("should return no more than the limit even with multiple queries", async () => {
       const { subscription, ws, actOnReq } = await givenMessageHandler({
         queries: [
           { until: 1733220001, limit: 1 },
